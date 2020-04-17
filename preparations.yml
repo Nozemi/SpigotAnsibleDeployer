@@ -55,7 +55,7 @@
       register: pluginsFound
 
     - name: Copy Spigot plugins to the role's files folder
-      command: cp -r ./Data/plugins/* ./roles/gameserver/files/plugins/
+      command: cp -r ./Data/plugins ./roles/gameserver/files/plugins
       when: pluginsFolder.stat.exists == true and pluginsFound.matched > 0
 
     - name: Check if world folder exists
