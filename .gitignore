@@ -1,0 +1,4 @@
+Minecraft
+roles/gameserver/files
+*.retry
+inventory

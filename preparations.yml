@@ -1,0 +1,68 @@
+- hosts: 127.0.0.1
+  connection: local
+  gather_facts: no
+  become: true
+  become_method: sudo
+  vars_prompt:
+    - name: mcVersion
+      prompt: "What Minecraft version do you want to build?"
+      private: no
+
+  tasks:
+    - name: Create Minecraft folder
+      file:
+        path: ./Minecraft
+        state: directory
+        mode: 0644
+
+    - name: Download Spigot BuildTools
+      get_url:
+        url: https://hub.spigotmc.org/jenkins/job/BuildTools/lastSuccessfulBuild/artifact/target/BuildTools.jar
+        dest: ./Minecraft/BuildTools.jar
+
+    - name: Install Java 8 JRE
+      apt:
+        state: present
+        pkg:
+          - openjdk-8-jre
+
+    - name: Check if selected Minecraft version already is built
+      stat:
+        path: ./Minecraft/spigot-{{mcVersion}}.jar
+      register: server_already_built
+
+    - name: Run BuildTools
+      command: chdir=Minecraft java -jar ./BuildTools.jar --rev {{mcVersion}}
+      when: server_already_built.stat.exists == false
+
+    - name: Create Minecraft folder
+      file:
+        path: ./roles/gameserver/files
+        state: directory
+        mode: 0644
+
+    - name: Copy Spigot JAR file to the role's files folder
+      command: cp -r ./Minecraft/spigot-{{mcVersion}}.jar ./roles/gameserver/files/spigot.jar
+
+    - name: Check if plugins folder exists
+      stat:
+        path: ./Data/plugins
+      register: pluginsFolder
+
+    - name: Check if plugins directory is empty
+      find:
+        paths: ./Data/plugins
+      register: pluginsFound
+
+    - name: Copy Spigot plugins to the role's files folder
+      command: cp -r ./Data/plugins/* ./roles/gameserver/files/plugins/
+      when: pluginsFolder.stat.exists == true and pluginsFound.matched > 0
+
+    - name: Check if world folder exists
+      stat:
+        path: ./Data/world
+      register: worldFolder
+
+    - name: Copy world to role's files folder
+      command: cp -r ./Data/world ./roles/gameserver/files/world
+      when: worldFolder.stat.exists == true

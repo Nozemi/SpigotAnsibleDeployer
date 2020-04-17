@@ -1,0 +1,41 @@
+- name: Install Java 8 JRE
+  apt:
+    state: present
+    pkg:
+      - openjdk-8-jre
+
+- name: Create a directory for the Minecraft server
+  file:
+    path: ~/mc
+    state: directory
+    mode: 0644
+
+- name: Check if Spigot is already copied over to the server
+  stat:
+    path: ~/mc/spigot.jar
+  register: spigotJarFile
+
+- name: Copy the Spigot JAR file to the server
+  copy:
+    src: "{{role_path}}/files/spigot.jar"
+    dest: ~/mc/spigot.jar
+    mode: 0644
+  when: spigotJarFile.stat.exists == false
+
+- name: Check if eula.txt exists
+  stat:
+    path: ~/mc/eula.txt
+  register: eulaFile
+
+- name: Run Spigot once
+  command: chdir=~/mc java -jar spigot.jar
+  when: eulaFile.stat.exists == false
+
+- name: Accept EULA for Minecraft server
+  replace:
+    path: ~/mc/eula.txt
+    regexp: 'eula=false'
+    replace: 'eula=true'
+
+- name: Run server again
+  command: chdir=~/mc nohup java -jar spigot.jar &
