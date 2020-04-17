@@ -37,5 +37,39 @@
     regexp: 'eula=false'
     replace: 'eula=true'
 
+- name: Check if world folder exists locally
+  stat:
+    path: "{{role_path}}/files/world"
+  register: localWorldFolder
+
+- name: Check if remote server already has a world
+  stat:
+    path: ~/mc/world
+  register: remoteWorldFolder
+
+- name: Copy world to the remote server
+  copy:
+    src: "{{role_path}}/files/world"
+    dest: ~/mc/world
+    mode: 0644
+  when: localWorldFolder.stat.exists == true and emoteWorldFolder.stat.exists == false
+
+- name: Check if plugins exists
+  stat:
+    path: "{{role_path}}/files/plugins"
+  register: localPluginsFolder
+
+- name: Check if remote plugins folder exists
+  stat:
+    path: ~/mc/plugins
+  register: remotePluginsFolder
+
+- name: Copy plugins to the remote server
+  copy:
+    src: "{{role_path}}/files/plugins"
+    dest: ~/mc/plugins
+    mode: 0644
+  when: localPluginsFolder.stat.exists == true and emotePluginsFolder.stat.exists == false
+
 - name: Run server again
   command: chdir=~/mc nohup java -jar spigot.jar &
