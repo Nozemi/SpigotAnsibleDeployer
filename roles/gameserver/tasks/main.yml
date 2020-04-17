@@ -27,6 +27,9 @@
     path: ~/mc/eula.txt
   register: eulaFile
 
+- name: Kill Java if running
+  command: killall java
+
 - name: Run Spigot once
   command: chdir=~/mc java -jar spigot.jar
   when: eulaFile.stat.exists == false
